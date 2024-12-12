@@ -92,7 +92,7 @@ def generate_network_pattern_data():
 def show_tower_placement():
     st.title("🗼 Tower Infrastructure Management")
     
-    tab1, tab2, tab3 = st.tabs(["📍 Location Analysis"])
+    tab1, tab2, tab3 = st.tabs(["📍 Location Analysis", "🔧 Maintenance", "🌤️ Weather Impact"])
     
     with tab1:
         st.subheader("Smart Tower Placement Map")
