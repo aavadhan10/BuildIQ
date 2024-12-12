@@ -35,9 +35,18 @@ st.markdown('<p class="subtitle">by Ankita Avadhani</p>', unsafe_allow_html=True
 # Sidebar
 st.sidebar.title("🏢 BuildIQ Features")
 page = st.sidebar.radio("Navigate", 
-    ["Tower Placement", "Network Monitor", "Network Pattern Analysis", "ROI Calculator"])
+    ["Tower Placement", "Network Pattern Monitor + Risk Alert", "ROI Calculator"])
 
-[Previous tower_placement, network_monitor, and roi_calculator functions remain the same...]
+# Data generation functions
+def generate_tower_data():
+    return pd.DataFrame({
+        'latitude': np.random.uniform(37.7, 37.9, 10),
+        'longitude': np.random.uniform(-122.5, -122.3, 10),
+        'priority_score': np.random.uniform(0, 1, 10),
+        'population_density': np.random.uniform(1000, 5000, 10),
+        'existing_coverage': np.random.uniform(0.3, 0.9, 10),
+        'expected_roi': np.random.uniform(0.1, 0.3, 10)
+    })
 
 def generate_network_pattern_data():
     # Generate hourly data for the past month
@@ -80,50 +89,101 @@ def generate_network_pattern_data():
         'packet_loss': packet_loss
     })
 
-def show_network_pattern_analysis():
-    st.title("📊 Network Pattern Analysis & Anomaly Detection")
-    st.write("""
-        AI-powered analysis to solve low forecast accuracy due to high seasonality and trending patterns in network performance data.
-        This system separates true anomalies from expected seasonal variations.
-    """)
+def show_tower_placement():
+    st.title("🗼 Tower Infrastructure Management")
+    
+    tab1, tab2, tab3 = st.tabs(["📍 Location Analysis", "🔧 Maintenance", "🌤️ Weather Impact"])
+    
+    with tab1:
+        st.subheader("Smart Tower Placement Map")
+        st.write("AI-powered analysis for optimal tower locations")
+        
+        # Generate data
+        tower_data = generate_tower_data()
+        
+        # Create map
+        m = folium.Map(location=[37.8, -122.4], zoom_start=12)
+        
+        # Add markers
+        for idx, row in tower_data.iterrows():
+            color = 'red' if row['priority_score'] > 0.7 else 'orange' if row['priority_score'] > 0.4 else 'green'
+            folium.CircleMarker(
+                location=[row['latitude'], row['longitude']],
+                radius=10,
+                color=color,
+                popup=f"""
+                    <b>Location {idx + 1}</b><br>
+                    Priority: {row['priority_score']:.2f}<br>
+                    Population: {row['population_density']:.0f}<br>
+                    Coverage: {row['existing_coverage']:.2%}<br>
+                    Expected ROI: {row['expected_roi']:.1%}
+                """,
+                fill=True
+            ).add_to(m)
+        
+        folium_static(m)
+        
+        # 3D Coverage Visualization
+        st.subheader("3D Coverage Analysis")
+        x = np.linspace(-5, 5, 50)
+        y = np.linspace(-5, 5, 50)
+        X, Y = np.meshgrid(x, y)
+        Z = np.sin(np.sqrt(X**2 + Y**2))
+
+        fig = go.Figure(data=[go.Surface(z=Z, x=x, y=y)])
+        fig.update_layout(title='Signal Strength Distribution')
+        st.plotly_chart(fig)
+
+        # Key metrics
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("High Priority Locations", len(tower_data[tower_data['priority_score'] > 0.7]))
+        with col2:
+            st.metric("Avg Population Density", f"{tower_data['population_density'].mean():.0f}")
+        with col3:
+            st.metric("Coverage Gap", f"{(1 - tower_data['existing_coverage'].mean()):.1%}")
+        with col4:
+            st.metric("Expected ROI", f"{tower_data['expected_roi'].mean():.1%}")
+
+def show_network_pattern_monitor():
+    st.title("📊 Network Pattern Monitor + Risk Alert")
+    st.write("AI-powered analysis to detect and alert on atypical network patterns, accounting for seasonality and trends")
     
     # Generate data
     data = generate_network_pattern_data()
+    recent_data = data.tail(48)  # Last 48 hours
     
-    # Pattern Decomposition
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "Real-time Monitoring", 
-        "Pattern Analysis", 
-        "Seasonality Impact", 
-        "Anomaly Detection"
-    ])
+    # Tabs for different views
+    tab1, tab2, tab3 = st.tabs(["🔍 Real-time Monitor", "📈 Pattern Analysis", "⚠️ Risk Alerts"])
     
     with tab1:
-        st.subheader("Current Network Status")
+        st.subheader("Live Network Status")
         
-        # Latest metrics
+        # Current metrics
         col1, col2, col3 = st.columns(3)
         with col1:
             current_load = data['network_load'].iloc[-1]
             expected_load = data['baseline'].iloc[-1]
+            deviation = current_load - expected_load
             st.metric("Network Load", 
                      f"{current_load:.2%}",
-                     f"{(current_load - expected_load)*100:.1f}% from expected")
+                     f"{deviation*100:.1f}% from expected",
+                     delta_color="inverse")
         with col2:
             current_latency = data['latency'].iloc[-1]
             st.metric("Latency",
                      f"{current_latency:.1f}ms",
-                     f"{current_latency - data['latency'].iloc[-2]:.1f}ms")
+                     f"{current_latency - data['latency'].mean():.1f}ms from avg",
+                     delta_color="inverse")
         with col3:
             current_loss = data['packet_loss'].iloc[-1]
             st.metric("Packet Loss",
                      f"{current_loss:.2%}",
-                     f"{(current_loss - data['packet_loss'].iloc[-2])*100:.2f}%")
+                     f"{(current_loss - data['packet_loss'].mean())*100:.2f}% from avg",
+                     delta_color="inverse")
         
-        # Real-time pattern comparison
+        # Real-time comparison chart
         fig = go.Figure()
-        recent_data = data.tail(48)  # Last 48 hours
-        
         fig.add_trace(go.Scatter(
             x=recent_data['timestamp'],
             y=recent_data['network_load'],
@@ -136,118 +196,63 @@ def show_network_pattern_analysis():
             name='Expected Pattern',
             line=dict(color='green', dash='dash')
         ))
-        
-        fig.update_layout(
-            title='Network Load: Last 48 Hours',
-            xaxis_title='Time',
-            yaxis_title='Network Load',
-            hovermode='x unified'
-        )
+        fig.update_layout(title='Network Load vs Expected Pattern (Last 48 Hours)')
         st.plotly_chart(fig, use_container_width=True)
     
     with tab2:
-        st.subheader("Pattern Decomposition")
-        
-        # Show individual components
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=data['timestamp'], y=data['trend'],
-                               name='Long-term Trend'))
-        fig.add_trace(go.Scatter(x=data['timestamp'], y=data['daily_seasonal'],
-                               name='Daily Pattern'))
-        fig.add_trace(go.Scatter(x=data['timestamp'], y=data['weekly_seasonal'],
-                               name='Weekly Pattern'))
-        
-        fig.update_layout(title='Network Pattern Components')
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Pattern strength analysis
-        pattern_strength = pd.DataFrame({
-            'Pattern': ['Daily', 'Weekly', 'Monthly', 'Trend'],
-            'Strength': [
-                data['daily_seasonal'].std(),
-                data['weekly_seasonal'].std(),
-                (data['network_load'] - data['trend']).std(),
-                data['trend'].std()
-            ]
-        })
-        
-        fig_strength = px.bar(pattern_strength,
-                            x='Pattern',
-                            y='Strength',
-                            title='Pattern Strength Analysis')
-        st.plotly_chart(fig_strength)
-    
-    with tab3:
-        st.subheader("Seasonality Impact Analysis")
+        st.subheader("Pattern Components")
         
         col1, col2 = st.columns(2)
-        
         with col1:
-            # Daily patterns
-            daily_avg = data.groupby(data['timestamp'].dt.hour)['network_load'].agg(['mean', 'std'])
-            fig_daily = go.Figure([
-                go.Scatter(
-                    x=daily_avg.index,
-                    y=daily_avg['mean'],
-                    name='Mean Load',
-                    line=dict(color='blue'),
-                ),
-                go.Scatter(
-                    x=daily_avg.index,
-                    y=daily_avg['mean'] + daily_avg['std'],
-                    fill=None,
-                    line=dict(color='gray'),
-                    name='Upper Bound'
-                ),
-                go.Scatter(
-                    x=daily_avg.index,
-                    y=daily_avg['mean'] - daily_avg['std'],
-                    fill='tonexty',
-                    line=dict(color='gray'),
-                    name='Lower Bound'
-                )
-            ])
-            fig_daily.update_layout(title='Daily Pattern Analysis')
+            # Daily pattern analysis
+            daily_avg = data.groupby(data['timestamp'].dt.hour)['network_load'].mean()
+            fig_daily = px.line(daily_avg, 
+                              title='Daily Network Pattern',
+                              labels={'value': 'Average Load', 'index': 'Hour of Day'})
             st.plotly_chart(fig_daily)
             
         with col2:
-            # Weekly patterns
-            weekly_avg = data.groupby(data['timestamp'].dt.dayofweek)['network_load'].agg(['mean', 'std'])
-            days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-            fig_weekly = go.Figure([
-                go.Scatter(
-                    x=days,
-                    y=weekly_avg['mean'],
-                    name='Mean Load',
-                    line=dict(color='blue')
-                ),
-                go.Scatter(
-                    x=days,
-                    y=weekly_avg['mean'] + weekly_avg['std'],
-                    fill=None,
-                    line=dict(color='gray'),
-                    name='Upper Bound'
-                ),
-                go.Scatter(
-                    x=days,
-                    y=weekly_avg['mean'] - weekly_avg['std'],
-                    fill='tonexty',
-                    line=dict(color='gray'),
-                    name='Lower Bound'
-                )
-            ])
-            fig_weekly.update_layout(title='Weekly Pattern Analysis')
+            # Weekly pattern analysis
+            weekly_avg = data.groupby(data['timestamp'].dt.dayofweek)['network_load'].mean()
+            fig_weekly = px.line(weekly_avg,
+                               title='Weekly Network Pattern',
+                               labels={'value': 'Average Load', 'index': 'Day of Week'})
             st.plotly_chart(fig_weekly)
+        
+        # Trend analysis
+        st.subheader("Long-term Trend")
+        fig_trend = px.line(data, x='timestamp', y=['trend', 'network_load'],
+                           title='Network Load Trend Analysis')
+        st.plotly_chart(fig_trend)
     
-    with tab4:
-        st.subheader("Anomaly Detection")
+    with tab3:
+        st.subheader("Network Risk Analysis")
         
-        # Calculate deviations
-        data['deviation'] = data['network_load'] - data['baseline']
-        threshold = data['deviation'].std() * 2  # 2 sigma threshold
-        anomalies = data[abs(data['deviation']) > threshold]
+        # Calculate deviations and identify risks
+        data['deviation'] = abs(data['network_load'] - data['baseline'])
+        threshold = data['deviation'].mean() + 2 * data['deviation'].std()
+        risk_periods = data[data['deviation'] > threshold].copy()
         
-        # Plot with anomalies highlighted
+        if not risk_periods.empty:
+            st.error("🚨 Atypical Network Patterns Detected!")
+            
+            # Show recent risks
+            for _, risk in risk_periods.tail(3).iterrows():
+                severity = "High" if risk['deviation'] > threshold * 1.5 else "Medium"
+                color = "red" if severity == "High" else "orange"
+                st.warning(f"""
+                    :{color}[{severity} Risk Pattern] detected at {risk['timestamp'].strftime('%Y-%m-%d %H:%M')}
+                    - Expected Load: {risk['baseline']:.2%}
+                    - Actual Load: {risk['network_load']:.2%}
+                    - Deviation: {risk['deviation']:.2%}
+                    
+                    Recommended Actions:
+                    1. Review network segments for anomalies
+                    2. Check for maintenance needs
+                    3. Monitor customer experience metrics
+                """)
+        
+        # Risk visualization
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=data['timestamp'],
@@ -255,44 +260,71 @@ def show_network_pattern_analysis():
             name='Network Load',
             line=dict(color='blue')
         ))
-        
-        # Highlight anomalies
         fig.add_trace(go.Scatter(
-            x=anomalies['timestamp'],
-            y=anomalies['network_load'],
+            x=risk_periods['timestamp'],
+            y=risk_periods['network_load'],
             mode='markers',
-            name='Anomalies',
+            name='Risk Periods',
             marker=dict(color='red', size=10)
         ))
+        fig.update_layout(title='Network Load with Risk Periods Highlighted')
+        st.plotly_chart(fig)
         
-        fig.update_layout(title='Network Load with Detected Anomalies')
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Anomaly statistics
-        st.metric("Anomaly Rate", f"{len(anomalies)/len(data)*100:.1f}%")
-        
-        if not anomalies.empty:
-            st.error("🚨 Recent Anomalies Detected")
-            for _, anomaly in anomalies.tail(5).iterrows():
-                st.warning(f"""
-                    Anomaly at {anomaly['timestamp'].strftime('%Y-%m-%d %H:%M')}:
-                    - Expected Load: {anomaly['baseline']:.2f}
-                    - Actual Load: {anomaly['network_load']:.2f}
-                    - Deviation: {anomaly['deviation']:.2f}
-                    
-                    Recommended Actions:
-                    1. Check network segments for unusual activity
-                    2. Compare with historical patterns
-                    3. Monitor for pattern persistence
-                """)
+        # Risk metrics
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Risk Periods Detected", 
+                     len(risk_periods),
+                     f"{len(risk_periods)/len(data)*100:.1f}% of time")
+        with col2:
+            st.metric("Average Risk Severity",
+                     f"{risk_periods['deviation'].mean()/threshold:.1f}x threshold")
+
+def show_roi_calculator():
+    st.title("💰 ROI Calculator")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        investment = st.number_input("Investment Amount ($)", 
+                                   min_value=100000, 
+                                   value=1000000, 
+                                   step=100000)
+        market_type = st.selectbox("Market Type", 
+                                 ["Urban", "Suburban", "Rural"])
+    with col2:
+        time_period = st.slider("Investment Timeline (Years)", 1, 5, 3)
+        risk_level = st.select_slider("Risk Level", 
+                                    options=["Low", "Medium", "High"])
+    
+    # Calculate ROI
+    base_roi = {"Urban": 0.15, "Suburban": 0.12, "Rural": 0.08}[market_type]
+    risk_multiplier = {"Low": 0.8, "Medium": 1.0, "High": 1.2}[risk_level]
+    roi = base_roi * risk_multiplier
+    
+    # Generate projections
+    years = list(range(time_period + 1))
+    projections = [investment * (1 + roi) ** year for year in years]
+    
+    # Show projections
+    fig = px.line(x=years, y=projections,
+                 title='Investment Growth Projection',
+                 labels={'x': 'Years', 'y': 'Value ($)'})
+    st.plotly_chart(fig)
+    
+    # Show metrics
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Expected Annual ROI", f"{roi:.1%}")
+    with col2:
+        st.metric("5-Year Return", f"${projections[-1]:,.0f}")
+    with col3:
+        st.metric("Break-even Time", f"{np.log(2)/np.log(1+roi):.1f} years")
 
 # Main app logic
 if page == "Tower Placement":
     show_tower_placement()
-elif page == "Network Monitor":
-    show_network_monitor()
-elif page == "Network Pattern Analysis":
-    show_network_pattern_analysis()
+elif page == "Network Pattern Monitor + Risk Alert":
+    show_network_pattern_monitor()
 elif page == "ROI Calculator":
     show_roi_calculator()
 
