@@ -1,3 +1,5 @@
+buildiq_demo.py
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -33,9 +35,9 @@ st.markdown('<p class="main-title">BuildIQ</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">by Ankita Avadhani</p>', unsafe_allow_html=True)
 
 # Sidebar
-st.sidebar.title("🏢 BuildIQ by Ankita Avadhani")
+st.sidebar.title("🏢 BuildIQ Features")
 page = st.sidebar.radio("Navigate", 
-    ["Tower Placement", "Network Pattern Monitor + Risk Alert", "ROI Calculator"])
+    ["Tower Placement", "Network Performance Monitor + Risk Alerts", "ROI Calculator"])
 
 # Data generation functions
 def generate_tower_data():
@@ -145,19 +147,93 @@ def show_tower_placement():
         with col4:
             st.metric("Expected ROI", f"{tower_data['expected_roi'].mean():.1%}")
 
-def show_network_pattern_monitor():
-    st.title("📊 Network Pattern Monitor + Risk Alert")
-    st.write("AI-powered analysis to detect and alert on atypical network patterns, accounting for seasonality and trends")
+    with tab2:
+        st.subheader("🔧 AI-Driven Predictive Maintenance")
+        maintenance_data = pd.DataFrame({
+            'Tower_ID': range(1, 6),
+            'Last_Maintenance': pd.date_range(start='2023-01-01', periods=5, freq='M'),
+            'Health_Score': np.random.uniform(0.5, 1, 5),
+            'Days_To_Maintenance': np.random.randint(30, 365, 5),
+            'Critical_Components': np.random.choice(['Antenna', 'Power', 'Network', 'Structure'], 5)
+        })
+        
+        # Show maintenance schedule
+        st.dataframe(
+            maintenance_data,
+            column_config={
+                "Health_Score": st.column_config.ProgressColumn(
+                    "Tower Health",
+                    help="Current health score of the tower",
+                    format="%.2f",
+                    min_value=0,
+                    max_value=1,
+                ),
+                "Days_To_Maintenance": st.column_config.NumberColumn(
+                    "Days Until Maintenance",
+                    help="Predicted days until maintenance required",
+                )
+            }
+        )
+        
+        # Maintenance priority chart
+        fig = px.scatter(maintenance_data, 
+                        x="Days_To_Maintenance", 
+                        y="Health_Score",
+                        size="Days_To_Maintenance",
+                        color="Critical_Components",
+                        hover_data=["Tower_ID"],
+                        title="Maintenance Priority Matrix")
+        st.plotly_chart(fig)
+
+    with tab3:
+        st.subheader("🌤️ Real-Time Weather Impact Analysis")
+        
+        # Generate weather impact data
+        weather_data = pd.DataFrame({
+            'condition': ['Clear', 'Rain', 'Storm', 'Snow', 'Fog'],
+            'signal_strength': [95, 80, 60, 70, 75],
+            'affected_towers': np.random.randint(0, 20, 5)
+        })
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Weather impact visualization
+            fig = px.bar(weather_data, x='condition', y='signal_strength',
+                         title='Signal Strength by Weather Condition',
+                         labels={'condition': 'Weather', 'signal_strength': 'Signal Strength (%)'})
+            st.plotly_chart(fig)
+        
+        with col2:
+            # Real-time weather alerts
+            st.subheader("Active Weather Alerts")
+            alerts = [
+                {"severity": "High", "condition": "Storm", "location": "North Sector"},
+                {"severity": "Medium", "condition": "Rain", "location": "West Sector"},
+            ]
+            
+            for alert in alerts:
+                color = "red" if alert["severity"] == "High" else "orange"
+                st.markdown(f":{color}[{alert['severity']}]: {alert['condition']} in {alert['location']}")
+            
+            # Impact statistics
+            st.metric("Affected Towers", f"{weather_data['affected_towers'].sum()}")
+            st.metric("Average Signal Impact", 
+                     f"{(100 - weather_data['signal_strength'].mean()):.1f}% degradation")
+
+def show_network_performance_monitor():
+    st.title("📊 Network Performance Monitor + Risk Alerts")
+    st.write("AI-powered analysis to detect and alert on atypical network performance patterns, accounting for seasonality and trends")
     
     # Generate data
     data = generate_network_pattern_data()
     recent_data = data.tail(48)  # Last 48 hours
     
     # Tabs for different views
-    tab1, tab2, tab3 = st.tabs(["🔍 Real-time Monitor", "📈 Pattern Analysis", "⚠️ Risk Alerts"])
+    tab1, tab2, tab3 = st.tabs(["🔍 Real-time Monitor", "📈 Performance Analysis", "⚠️ Risk Alerts"])
     
     with tab1:
-        st.subheader("Live Network Status")
+        st.subheader("Current Network Status")
         
         # Current metrics
         col1, col2, col3 = st.columns(3)
@@ -275,6 +351,8 @@ def show_network_pattern_monitor():
         with col1:
             st.metric("Risk Periods Detected", 
                      len(risk_periods),
+                     f
+                      len(risk_periods),
                      f"{len(risk_periods)/len(data)*100:.1f}% of time")
         with col2:
             st.metric("Average Risk Severity",
@@ -323,8 +401,8 @@ def show_roi_calculator():
 # Main app logic
 if page == "Tower Placement":
     show_tower_placement()
-elif page == "Network Pattern Monitor + Risk Alert":
-    show_network_pattern_monitor()
+elif page == "Network Performance Monitor + Risk Alerts":
+    show_network_performance_monitor()
 elif page == "ROI Calculator":
     show_roi_calculator()
 
