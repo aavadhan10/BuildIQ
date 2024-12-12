@@ -35,7 +35,7 @@ st.markdown('<p class="subtitle">by Ankita Avadhani</p>', unsafe_allow_html=True
 # Sidebar
 st.sidebar.title("🏢 BuildIQ by Ankita Avadhani")
 page = st.sidebar.radio("Navigate", 
-    ["Automated Tower Management", "Network Pattern Monitor + Risk Alert", "ROI Calculator"])
+    ["Tower Placement", "Network Pattern Monitor + Risk Alert", "ROI Calculator"])
 
 # Data generation functions
 def generate_tower_data():
