@@ -90,9 +90,9 @@ def generate_network_pattern_data():
     })
 
 def show_tower_placement():
-    st.title("🗼 Tower Infrastructure Management")
+    st.title("🗼 Automated Tower Infrastructure Management")
     
-    st.subheader("Smart Tower Placement Map")
+    st.subheader("Smart Tower Prioritization Map for Upgrades, Maintanence + Optimization")
     st.write("Machine Learning Powered analysis for optimal tower locations")
     
     # Generate data
