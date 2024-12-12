@@ -93,7 +93,7 @@ def show_tower_placement():
     st.title("🗼 Tower Infrastructure Management")
     
     st.subheader("Smart Tower Placement Map")
-    st.write("AI-powered analysis for optimal tower locations")
+    st.write("Machine Learning Powered analysis for optimal tower locations")
     
     # Generate data
     tower_data = generate_tower_data()
