@@ -5,12 +5,16 @@ import folium
 from streamlit_folium import folium_static
 import plotly.express as px
 from datetime import datetime, timedelta
-import random
 
-# Set page config
-st.set_page_config(page_title="BuildIQ Demo", layout="wide")
+# Set page config with a more professional look
+st.set_page_config(
+    page_title="BuildIQ Demo",
+    page_icon="🏢",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Add custom CSS for better styling
+# Custom CSS for better styling
 st.markdown("""
     <style>
     .main {
@@ -24,8 +28,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Sidebar navigation
-st.sidebar.title("BuildIQ Features")
+# Sidebar with company logo placeholder and navigation
+st.sidebar.title("🏢 BuildIQ")
 st.sidebar.markdown("---")
 selected_feature = st.sidebar.radio(
     "Select Feature",
@@ -55,7 +59,6 @@ def generate_churn_data():
         'revenue_impact': np.random.uniform(10000, 50000, len(dates))
     })
 
-# Feature implementations
 def show_tower_placement():
     st.title("🗼 Tower Placement Map")
     st.write("Interactive map showing optimal locations for new tower placement based on ML analysis")
@@ -63,30 +66,38 @@ def show_tower_placement():
     # Generate sample data
     tower_data = generate_tower_data()
     
-    # Create map
+    # Create map centered on San Francisco
     m = folium.Map(location=[37.8, -122.4], zoom_start=12)
     
     # Add markers for potential tower locations
     for idx, row in tower_data.iterrows():
+        # Color coding based on priority score
         color = 'red' if row['priority_score'] > 0.7 else 'orange' if row['priority_score'] > 0.4 else 'green'
-        folium.CircleMarker(
-            location=[row['latitude'], row['longitude']],
-            radius=10,
-            color=color,
-            popup=f"""
+        
+        # Create detailed popup content
+        popup_content = f"""
+            <div style='font-family: Arial'>
                 <b>Location {idx + 1}</b><br>
                 Priority: {row['priority_score']:.2f}<br>
                 Population: {row['population_density']:.0f}<br>
                 Coverage: {row['existing_coverage']:.2%}<br>
                 Expected ROI: {row['expected_roi']:.1%}
-            """,
+            </div>
+        """
+        
+        # Add marker to map
+        folium.CircleMarker(
+            location=[row['latitude'], row['longitude']],
+            radius=10,
+            color=color,
+            popup=folium.Popup(popup_content, max_width=200),
             fill=True
         ).add_to(m)
     
-    # Add map to streamlit
+    # Display map
     folium_static(m)
     
-    # Additional metrics
+    # Display key metrics in columns
     st.markdown("### Key Metrics")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -98,11 +109,27 @@ def show_tower_placement():
     with col4:
         st.metric("Expected ROI", f"{tower_data['expected_roi'].mean():.1%}")
 
-    # Location details
+    # Display data table without matplotlib dependency
     st.markdown("### Detailed Location Analysis")
     st.dataframe(
-        tower_data.round(3).style.background_gradient(subset=['priority_score'], cmap='RdYlGn'),
-        hide_index=True
+        tower_data.round(3),
+        hide_index=True,
+        column_config={
+            "priority_score": st.column_config.ProgressColumn(
+                "Priority Score",
+                format="%.2f",
+                min_value=0,
+                max_value=1,
+            ),
+            "expected_roi": st.column_config.NumberColumn(
+                "Expected ROI",
+                format="%.1%"
+            ),
+            "existing_coverage": st.column_config.NumberColumn(
+                "Existing Coverage",
+                format="%.1%"
+            )
+        }
     )
 
 def show_churn_risk():
@@ -118,9 +145,18 @@ def show_churn_risk():
                   title='Churn Risk vs Network Quality Over Time',
                   labels={'value': 'Score', 'variable': 'Metric'},
                   color_discrete_map={'churn_risk': 'red', 'network_quality': 'green'})
+    
+    # Update layout for better readability
+    fig.update_layout(
+        height=400,
+        legend_title_text='Metrics',
+        xaxis_title='Date',
+        yaxis_title='Score'
+    )
+    
     st.plotly_chart(fig, use_container_width=True)
     
-    # Alert system
+    # Alert system based on current risk
     current_risk = churn_data['churn_risk'].iloc[-1]
     if current_risk > 0.7:
         st.error("🚨 High churn risk detected! Immediate action required in identified zones.")
@@ -129,69 +165,94 @@ def show_churn_risk():
     else:
         st.success("✅ Churn risk levels are currently normal.")
     
-    # Key metrics
+    # Display key metrics
     st.markdown("### Real-time Metrics")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Current Churn Risk", f"{current_risk:.1%}")
+        st.metric(
+            "Current Churn Risk", 
+            f"{current_risk:.1%}",
+            delta=f"{(current_risk - churn_data['churn_risk'].iloc[-2])*100:.1f}%"
+        )
     with col2:
-        st.metric("Network Quality", f"{churn_data['network_quality'].iloc[-1]:.1%}")
+        st.metric(
+            "Network Quality", 
+            f"{churn_data['network_quality'].iloc[-1]:.1%}"
+        )
     with col3:
-        st.metric("Active Complaints", churn_data['customer_complaints'].iloc[-1])
+        st.metric(
+            "Active Complaints", 
+            churn_data['customer_complaints'].iloc[-1]
+        )
     with col4:
-        st.metric("Revenue at Risk", f"${churn_data['revenue_impact'].iloc[-1]:,.0f}")
-
-    # Historical trends
-    st.markdown("### Historical Analysis")
-    trend_data = churn_data.resample('W', on='date').mean()
-    st.line_chart(trend_data[['churn_risk', 'network_quality']])
+        st.metric(
+            "Revenue at Risk", 
+            f"${churn_data['revenue_impact'].iloc[-1]:,.0f}"
+        )
 
 def show_roi_calculator():
     st.title("💰 ROI Calculator")
     st.write("AI-powered investment planning and ROI forecasting system")
     
-    # Input parameters
+    # Investment parameters input
     st.markdown("### Investment Parameters")
     col1, col2 = st.columns(2)
     with col1:
-        investment_amount = st.number_input("Investment Amount ($)", 
-                                          min_value=100000, 
-                                          value=1000000, 
-                                          step=100000,
-                                          format="%d")
+        investment_amount = st.number_input(
+            "Investment Amount ($)", 
+            min_value=100000, 
+            value=1000000, 
+            step=100000,
+            format="%d"
+        )
         time_period = st.slider("Investment Timeline (Years)", 1, 5, 3)
     with col2:
         market_type = st.selectbox("Market Type", ["Urban", "Suburban", "Rural"])
-        risk_level = st.select_slider("Risk Level", 
-                                    options=["Low", "Medium", "High"],
-                                    value="Medium")
+        risk_level = st.select_slider(
+            "Risk Level", 
+            options=["Low", "Medium", "High"],
+            value="Medium"
+        )
     
-    # Calculate ROI (with more realistic factors)
+    # ROI Calculations
     base_roi = {"Urban": 0.15, "Suburban": 0.12, "Rural": 0.08}[market_type]
     risk_multiplier = {"Low": 0.8, "Medium": 1.0, "High": 1.2}[risk_level]
     roi = base_roi * risk_multiplier
     
     # Market condition adjustment
-    market_conditions = st.slider("Market Condition Adjustment", -0.05, 0.05, 0.0, 0.01)
+    market_conditions = st.slider(
+        "Market Condition Adjustment", 
+        -0.05, 
+        0.05, 
+        0.0, 
+        0.01,
+        format="%.2f"
+    )
     roi += market_conditions
     
-    # Show projections
-    st.markdown("### Investment Projections")
+    # Calculate projections
     years = list(range(time_period + 1))
     projections = [investment_amount * (1 + roi) ** year for year in years]
     
     # Create projection chart
-    fig = px.line(x=years, 
-                  y=projections,
-                  labels={'x': 'Year', 'y': 'Projected Value ($)'},
-                  title='Projected Investment Growth')
-    fig.add_scatter(x=years, 
-                   y=[investment_amount * (1 + roi*0.8) ** year for year in years],
-                   name='Conservative Estimate',
-                   line=dict(dash='dash'))
+    fig = px.line(
+        x=years, 
+        y=projections,
+        labels={'x': 'Year', 'y': 'Projected Value ($)'},
+        title='Projected Investment Growth'
+    )
+    
+    # Add conservative estimate
+    fig.add_scatter(
+        x=years, 
+        y=[investment_amount * (1 + roi*0.8) ** year for year in years],
+        name='Conservative Estimate',
+        line=dict(dash='dash')
+    )
+    
     st.plotly_chart(fig, use_container_width=True)
     
-    # Summary metrics
+    # Display summary metrics
     st.markdown("### ROI Summary")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -202,21 +263,6 @@ def show_roi_calculator():
         st.metric("Total Growth", f"{(projections[-1]/investment_amount - 1):.1%}")
     with col4:
         st.metric("Break-even Time", f"{np.log(2)/np.log(1+roi):.1f} years")
-
-    # Risk analysis
-    st.markdown("### Risk Analysis")
-    risk_factors = pd.DataFrame({
-        'Factor': ['Market Volatility', 'Competition', 'Technical Risk', 'Regulatory Risk'],
-        'Impact': np.random.uniform(0, 1, 4),
-        'Mitigation Strategy': [
-            'Market diversification',
-            'First-mover advantage',
-            'Redundant systems',
-            'Compliance monitoring'
-        ]
-    })
-    st.dataframe(risk_factors.style.background_gradient(subset=['Impact'], cmap='RdYlGn_r'),
-                hide_index=True)
 
 # Main app logic
 if selected_feature == "Tower Placement Map":
