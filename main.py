@@ -347,16 +347,15 @@ def show_network_performance_monitor():
         st.plotly_chart(fig)
         
         # Risk metrics
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Risk Periods Detected", 
-                     len(risk_periods),
-                     f
-                      len(risk_periods),
-                     f"{len(risk_periods)/len(data)*100:.1f}% of time")
-        with col2:
-            st.metric("Average Risk Severity",
-                     f"{risk_periods['deviation'].mean()/threshold:.1f}x threshold")
+       # Risk metrics section
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("Risk Periods Detected", 
+              len(risk_periods),
+              f"{len(risk_periods)/len(data)*100:.1f}% of time")
+with col2:
+    st.metric("Average Risk Severity",
+              f"{risk_periods['deviation'].mean()/threshold:.1f}x threshold")
 
 def show_roi_calculator():
     st.title("💰 ROI Calculator")
@@ -364,15 +363,15 @@ def show_roi_calculator():
     col1, col2 = st.columns(2)
     with col1:
         investment = st.number_input("Investment Amount ($)", 
-                                   min_value=100000, 
-                                   value=1000000, 
-                                   step=100000)
+                                     min_value=100000, 
+                                     value=1000000, 
+                                     step=100000)
         market_type = st.selectbox("Market Type", 
-                                 ["Urban", "Suburban", "Rural"])
+                                   ["Urban", "Suburban", "Rural"])
     with col2:
         time_period = st.slider("Investment Timeline (Years)", 1, 5, 3)
         risk_level = st.select_slider("Risk Level", 
-                                    options=["Low", "Medium", "High"])
+                                      options=["Low", "Medium", "High"])
     
     # Calculate ROI
     base_roi = {"Urban": 0.15, "Suburban": 0.12, "Rural": 0.08}[market_type]
@@ -385,8 +384,8 @@ def show_roi_calculator():
     
     # Show projections
     fig = px.line(x=years, y=projections,
-                 title='Investment Growth Projection',
-                 labels={'x': 'Years', 'y': 'Value ($)'})
+                  title='Investment Growth Projection',
+                  labels={'x': 'Years', 'y': 'Value ($)'})
     st.plotly_chart(fig)
     
     # Show metrics
