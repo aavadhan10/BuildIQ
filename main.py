@@ -92,58 +92,55 @@ def generate_network_pattern_data():
 def show_tower_placement():
     st.title("🗼 Tower Infrastructure Management")
     
-    tab1, tab2, tab3 = st.tabs(["📍 Location Analysis", "🔧 Maintenance", "🌤️ Weather Impact"])
+    st.subheader("Smart Tower Placement Map")
+    st.write("AI-powered analysis for optimal tower locations")
     
-    with tab1:
-        st.subheader("Smart Tower Placement Map")
-        st.write("AI-powered analysis for optimal tower locations")
-        
-        # Generate data
-        tower_data = generate_tower_data()
-        
-        # Create map
-        m = folium.Map(location=[37.8, -122.4], zoom_start=12)
-        
-        # Add markers
-        for idx, row in tower_data.iterrows():
-            color = 'red' if row['priority_score'] > 0.7 else 'orange' if row['priority_score'] > 0.4 else 'green'
-            folium.CircleMarker(
-                location=[row['latitude'], row['longitude']],
-                radius=10,
-                color=color,
-                popup=f"""
-                    <b>Location {idx + 1}</b><br>
-                    Priority: {row['priority_score']:.2f}<br>
-                    Population: {row['population_density']:.0f}<br>
-                    Coverage: {row['existing_coverage']:.2%}<br>
-                    Expected ROI: {row['expected_roi']:.1%}
-                """,
-                fill=True
-            ).add_to(m)
-        
-        folium_static(m)
-        
-        # 3D Coverage Visualization
-        st.subheader("3D Coverage Analysis")
-        x = np.linspace(-5, 5, 50)
-        y = np.linspace(-5, 5, 50)
-        X, Y = np.meshgrid(x, y)
-        Z = np.sin(np.sqrt(X**2 + Y**2))
+    # Generate data
+    tower_data = generate_tower_data()
+    
+    # Create map
+    m = folium.Map(location=[37.8, -122.4], zoom_start=12)
+    
+    # Add markers
+    for idx, row in tower_data.iterrows():
+        color = 'red' if row['priority_score'] > 0.7 else 'orange' if row['priority_score'] > 0.4 else 'green'
+        folium.CircleMarker(
+            location=[row['latitude'], row['longitude']],
+            radius=10,
+            color=color,
+            popup=f"""
+                <b>Location {idx + 1}</b><br>
+                Priority: {row['priority_score']:.2f}<br>
+                Population: {row['population_density']:.0f}<br>
+                Coverage: {row['existing_coverage']:.2%}<br>
+                Expected ROI: {row['expected_roi']:.1%}
+            """,
+            fill=True
+        ).add_to(m)
+    
+    folium_static(m)
+    
+    # 3D Coverage Visualization
+    st.subheader("3D Coverage Analysis")
+    x = np.linspace(-5, 5, 50)
+    y = np.linspace(-5, 5, 50)
+    X, Y = np.meshgrid(x, y)
+    Z = np.sin(np.sqrt(X**2 + Y**2))
 
-        fig = go.Figure(data=[go.Surface(z=Z, x=x, y=y)])
-        fig.update_layout(title='Signal Strength Distribution')
-        st.plotly_chart(fig)
+    fig = go.Figure(data=[go.Surface(z=Z, x=x, y=y)])
+    fig.update_layout(title='Signal Strength Distribution')
+    st.plotly_chart(fig)
 
-        # Key metrics
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("High Priority Locations", len(tower_data[tower_data['priority_score'] > 0.7]))
-        with col2:
-            st.metric("Avg Population Density", f"{tower_data['population_density'].mean():.0f}")
-        with col3:
-            st.metric("Coverage Gap", f"{(1 - tower_data['existing_coverage'].mean()):.1%}")
-        with col4:
-            st.metric("Expected ROI", f"{tower_data['expected_roi'].mean():.1%}")
+    # Key metrics
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("High Priority Locations", len(tower_data[tower_data['priority_score'] > 0.7]))
+    with col2:
+        st.metric("Avg Population Density", f"{tower_data['population_density'].mean():.0f}")
+    with col3:
+        st.metric("Coverage Gap", f"{(1 - tower_data['existing_coverage'].mean()):.1%}")
+    with col4:
+        st.metric("Expected ROI", f"{tower_data['expected_roi'].mean():.1%}")
 
 def show_network_pattern_monitor():
     st.title("📊 Network Pattern Monitor + Risk Alert")
