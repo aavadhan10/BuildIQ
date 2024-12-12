@@ -33,7 +33,7 @@ st.markdown('<p class="main-title">BuildIQ</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">by Ankita Avadhani</p>', unsafe_allow_html=True)
 
 # Sidebar
-st.sidebar.title("🏢 BuildIQ Features")
+st.sidebar.title("🏢 BuildIQ by Ankita Avadhani")
 page = st.sidebar.radio("Navigate", 
     ["Tower Placement", "Network Pattern Monitor + Risk Alert", "ROI Calculator"])
 
