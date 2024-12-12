@@ -35,7 +35,8 @@ st.markdown('<p class="subtitle">by Ankita Avadhani</p>', unsafe_allow_html=True
 # Sidebar
 st.sidebar.title("🏢 BuildIQ by Ankita Avadhani")
 page = st.sidebar.radio("Navigate", 
-    ["Automated Tower Management Map", "Network Pattern Monitor + Risk Alert", "ROI Calculator"])
+    ["Home", "Automated Tower Management Map", "Network Pattern Monitor + Risk Alert", "ROI Calculator"])
+
 
 # Data generation functions
 def generate_tower_data():
@@ -316,9 +317,60 @@ def show_roi_calculator():
         st.metric("5-Year Return", f"${projections[-1]:,.0f}")
     with col3:
         st.metric("Break-even Time", f"{np.log(2)/np.log(1+roi):.1f} years")
+def show_home():
+    st.title("🏡 Welcome to BuildIQ")
+    st.write("Transforming Telecommunications Infrastructure Management with AI")
+    
+    # Feature cards
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.header("🗼 Automated Tower Management Map")
+        st.write("Optimize tower infrastructure with AI-powered insights.")
+        st.markdown("""
+        Key Features:
+        - Smart location prioritization
+        - Population density analysis
+        - Coverage gap identification
+        - Expected ROI calculation
+        """)
+    
+    with col2:
+        st.header("📊 Network Pattern Monitoring")
+        st.write("Detect and predict network performance anomalies.")
+        st.markdown("""
+        Key Features:
+        - Real-time network load tracking
+        - Seasonal pattern analysis
+        - Risk alert system
+        - Predictive maintenance insights
+        """)
+    
+    with col3:
+        st.header("💰 ROI Calculator")
+        st.write("Forecast investment returns with precision.")
+        st.markdown("""
+        Key Features:
+        - Market type-based projections
+        - Risk level adjustments
+        - Multi-year investment modeling
+        - Break-even time estimation
+        """)
+    
+    # Mission statement
+    st.markdown("---")
+    st.write("""
+    ### Our Mission
+    BuildIQ leverages cutting-edge machine learning and generative AI to transform telecommunications infrastructure management. 
+    By providing data-driven insights, we help telecom companies make smarter, more efficient decisions.
+    """)
+
+# Existing functions remain the same (show_tower_placement, show_network_pattern_monitor, show_roi_calculator)
 
 # Main app logic
-if page == "Automated Tower Management Map":
+if page == "Home":
+    show_home()
+elif page == "Automated Tower Management Map":
     show_tower_placement()
 elif page == "Network Pattern Monitor + Risk Alert":
     show_network_pattern_monitor()
