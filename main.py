@@ -35,7 +35,7 @@ st.markdown('<p class="subtitle">by Ankita Avadhani</p>', unsafe_allow_html=True
 # Sidebar
 st.sidebar.title("🏢 BuildIQ by Ankita Avadhani")
 page = st.sidebar.radio("Navigate", 
-    ["Tower Placement", "Network Pattern Monitor + Risk Alert", "ROI Calculator"])
+    ["Automated Tower Management Map", "Network Pattern Monitor + Risk Alert", "ROI Calculator"])
 
 # Data generation functions
 def generate_tower_data():
@@ -318,7 +318,7 @@ def show_roi_calculator():
         st.metric("Break-even Time", f"{np.log(2)/np.log(1+roi):.1f} years")
 
 # Main app logic
-if page == "Tower Placement":
+if page == "Automated Tower Management Map":
     show_tower_placement()
 elif page == "Network Pattern Monitor + Risk Alert":
     show_network_pattern_monitor()
