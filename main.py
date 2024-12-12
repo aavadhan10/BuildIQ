@@ -37,7 +37,46 @@ st.sidebar.title("🏢 BuildIQ Features")
 page = st.sidebar.radio("Navigate", 
     ["Tower Placement", "Network Monitor", "Churn Risk", "ROI Calculator"])
 
-[Previous data generation functions remain the same...]
+# Data generation functions
+def generate_tower_data():
+    return pd.DataFrame({
+        'latitude': np.random.uniform(37.7, 37.9, 10),
+        'longitude': np.random.uniform(-122.5, -122.3, 10),
+        'priority_score': np.random.uniform(0, 1, 10),
+        'population_density': np.random.uniform(1000, 5000, 10),
+        'existing_coverage': np.random.uniform(0.3, 0.9, 10),
+        'expected_roi': np.random.uniform(0.1, 0.3, 10)
+    })
+
+def simulate_network_traffic():
+    return {
+        'data_volume': np.random.normal(500, 100),
+        'active_users': np.random.randint(1000, 5000),
+        'network_load': np.random.uniform(0.3, 0.9),
+        'latency': np.random.normal(20, 5),
+        'packet_loss': np.random.uniform(0, 0.02)
+    }
+
+def generate_maintenance_data():
+    return pd.DataFrame({
+        'Tower_ID': range(1, 6),
+        'Last_Maintenance': pd.date_range(start='2023-01-01', periods=5, freq='M'),
+        'Health_Score': np.random.uniform(0.5, 1, 5),
+        'Days_To_Maintenance': np.random.randint(30, 365, 5),
+        'Critical_Components': np.random.choice(['Antenna', 'Power', 'Network', 'Structure'], 5)
+    })
+
+def generate_churn_data():
+    dates = pd.date_range(start='2024-01-01', end='2024-12-31', freq='D')
+    base_risk = np.sin(np.linspace(0, 4*np.pi, len(dates))) * 0.3 + 0.5
+    noise = np.random.normal(0, 0.1, len(dates))
+    return pd.DataFrame({
+        'date': dates,
+        'churn_risk': np.clip(base_risk + noise, 0, 1),
+        'network_quality': np.random.uniform(0.5, 1, len(dates)),
+        'customer_complaints': np.random.randint(0, 100, len(dates)),
+        'revenue_impact': np.random.uniform(10000, 50000, len(dates))
+    })
 
 def show_tower_placement():
     st.title("🗼 Tower Infrastructure Management")
@@ -163,7 +202,105 @@ def show_tower_placement():
             st.metric("Average Signal Impact", 
                      f"{(100 - weather_data['signal_strength'].mean()):.1f}% degradation")
 
-[Previous show_network_monitor(), show_churn_risk(), and show_roi_calculator() functions remain the same...]
+def show_network_monitor():
+    st.title("📊 Live Network Monitor")
+    
+    # Create placeholder for live metrics
+    metrics_placeholder = st.empty()
+    chart_placeholder = st.empty()
+    
+    # Initialize data storage
+    if 'network_data' not in st.session_state:
+        st.session_state.network_data = []
+    
+    # Simulate real-time monitoring
+    metrics = simulate_network_traffic()
+    
+    # Update metrics
+    with metrics_placeholder.container():
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Network Load", f"{metrics['network_load']:.1%}")
+        col2.metric("Active Users", f"{metrics['active_users']:,}")
+        col3.metric("Latency", f"{metrics['latency']:.1f}ms")
+        col4.metric("Packet Loss", f"{metrics['packet_loss']:.2%}")
+    
+    # Store and display historical data
+    st.session_state.network_data.append(metrics)
+    if len(st.session_state.network_data) > 50:
+        st.session_state.network_data.pop(0)
+    
+    # Create historical chart
+    df = pd.DataFrame(st.session_state.network_data)
+    fig = px.line(df, y=['network_load', 'packet_loss'], 
+                 title='Network Performance Trends')
+    chart_placeholder.plotly_chart(fig, use_container_width=True)
+
+def show_churn_risk():
+    st.title("⚠️ Churn Risk Analysis")
+    
+    # Generate churn data
+    churn_data = generate_churn_data()
+    
+    # Show current risk metrics
+    current_risk = churn_data['churn_risk'].iloc[-1]
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Current Churn Risk", f"{current_risk:.1%}")
+    with col2:
+        st.metric("Network Quality", f"{churn_data['network_quality'].iloc[-1]:.1%}")
+    with col3:
+        st.metric("Active Complaints", churn_data['customer_complaints'].iloc[-1])
+    
+    # Churn risk over time
+    fig = px.line(churn_data, x='date', y=['churn_risk', 'network_quality'],
+                 title='Churn Risk vs Network Quality Trends')
+    st.plotly_chart(fig)
+    
+    # Risk alerts
+    if current_risk > 0.7:
+        st.error("🚨 High churn risk detected! Immediate action required.")
+    elif current_risk > 0.4:
+        st.warning("⚠️ Moderate churn risk detected. Monitor situation.")
+
+def show_roi_calculator():
+    st.title("💰 ROI Calculator")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        investment = st.number_input("Investment Amount ($)", 
+                                   min_value=100000, 
+                                   value=1000000, 
+                                   step=100000)
+        market_type = st.selectbox("Market Type", 
+                                 ["Urban", "Suburban", "Rural"])
+    with col2:
+        time_period = st.slider("Investment Timeline (Years)", 1, 5, 3)
+        risk_level = st.select_slider("Risk Level", 
+                                    options=["Low", "Medium", "High"])
+    
+    # Calculate ROI
+    base_roi = {"Urban": 0.15, "Suburban": 0.12, "Rural": 0.08}[market_type]
+    risk_multiplier = {"Low": 0.8, "Medium": 1.0, "High": 1.2}[risk_level]
+    roi = base_roi * risk_multiplier
+    
+    # Generate projections
+    years = list(range(time_period + 1))
+    projections = [investment * (1 + roi) ** year for year in years]
+    
+    # Show projections
+    fig = px.line(x=years, y=projections,
+                 title='Investment Growth Projection',
+                 labels={'x': 'Years', 'y': 'Value ($)'})
+    st.plotly_chart(fig)
+    
+    # Show metrics
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Expected Annual ROI", f"{roi:.1%}")
+    with col2:
+        st.metric("5-Year Return", f"${projections[-1]:,.0f}")
+    with col3:
+        st.metric("Break-even Time", f"{np.log(2)/np.log(1+roi):.1f} years")
 
 # Main app logic
 if page == "Tower Placement":
