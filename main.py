@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 import folium
 from streamlit_folium import folium_static
 from datetime import datetime, timedelta
-import time
+import time 
 
 # Page config
 st.set_page_config(page_title="BuildIQ by Ankita Avadhani", layout="wide", page_icon="🏢")
